@@ -135,6 +135,49 @@ static void screen_running_event_handler (lv_event_t *e)
 		running_update_data_task = lv_timer_create(screen_running_timer_cb, 100, &guider_ui);
 		page_number = PAGE_RUNNING;
 		memset(&voltage_current_set, 0, sizeof(voltage_current_set));
+
+//--fm
+		// Note: button GPIOs are for M5Stack
+		{
+			int v = 0;
+			int a = 0;
+
+			delay(1000);
+			// BtnB
+			if(digitalRead(GPIO_NUM_39) == LOW)
+			{
+				beep();
+				while(digitalRead(GPIO_NUM_39) == LOW) delay(10);
+				v = 33; // 3.3 V
+				a = 1;
+			}
+			// BtnB
+			if(digitalRead(GPIO_NUM_38) == LOW)
+			{
+				beep();
+				while(digitalRead(GPIO_NUM_38) == LOW) delay(10);
+				v = 50; // 5.0 V
+				a = 1;
+			}
+			// BtnC
+			else if(digitalRead(GPIO_NUM_37) == LOW)
+			{
+				beep();
+				while(digitalRead(GPIO_NUM_37) == LOW) delay(10);
+				v = 120; // 12.0 V
+				a = 1;
+			}
+			// Set voltage (tenth)
+			for(int i = 0; i < v; i++) setting_voltage_current_add(2);
+			// Set current (oneth)
+			for(int i = 0; i < a; i++) setting_voltage_current_add(6);
+			// Set cursor to voltage (oneth / tenth)
+			select_voltage_current();
+			if(v == 33) select_voltage_current();
+			// Mute beep
+			set_voice();
+		}
+
 		break;
 	}
 	case LV_EVENT_SCREEN_UNLOADED:
@@ -758,8 +801,14 @@ void set_output(void)
 		lv_obj_clear_flag(guider_ui.screen_running_img_output_enable, LV_OBJ_FLAG_HIDDEN);	
 		lv_obj_clear_flag(guider_ui.screen_running_img_5, LV_OBJ_FLAG_HIDDEN);
 		lv_obj_add_flag(guider_ui.screen_running_img_1, LV_OBJ_FLAG_HIDDEN);
-		lv_obj_add_flag(guider_ui.screen_running_img_loud, LV_OBJ_FLAG_HIDDEN);
-		lv_obj_add_flag(guider_ui.screen_running_img_mute, LV_OBJ_FLAG_HIDDEN);		
+		if (!voice_flag) {
+			lv_obj_add_flag(guider_ui.screen_running_img_mute, LV_OBJ_FLAG_HIDDEN);
+			lv_obj_clear_flag(guider_ui.screen_running_img_loud, LV_OBJ_FLAG_HIDDEN);
+		}
+		else {
+			lv_obj_add_flag(guider_ui.screen_running_img_loud, LV_OBJ_FLAG_HIDDEN);
+			lv_obj_clear_flag(guider_ui.screen_running_img_mute, LV_OBJ_FLAG_HIDDEN);
+		}
 		pps.setPowerEnable(true);		
 	}
 }

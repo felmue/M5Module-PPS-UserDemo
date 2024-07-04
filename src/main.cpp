@@ -11,14 +11,18 @@ void setup() {
   M5.Speaker.setVolume(100);
   M5.Display.begin();
   M5.Display.setEpdMode(epd_mode_t::epd_fastest);
-  while (!pps.begin(&Wire, M5.In_I2C.getSDA(), M5.In_I2C.getSCL(), MODULE_POWER_ADDR, 100000U))
+  // Reduce I2C frequency to 50 kHz to prevent crash
+  while (!pps.begin(&Wire, M5.In_I2C.getSDA(), M5.In_I2C.getSCL(), MODULE_POWER_ADDR, 50000U))
   {
     M5.Display.startWrite();
     M5.Display.setTextColor(RED);
-    M5.Display.drawCenterString("No I2C Dev!!!", M5.Display.width()/2, M5.Display.height()/2, &Font4);
+    M5.Display.drawCenterString("No I2C Dev!!!", M5.Display.width()/2, M5.Display.height()/2 - 12, &Font4);
+    M5.Display.drawCenterString("Ext. DC power required!!!", M5.Display.width()/2, M5.Display.height()/2 + 12, &Font4);
     M5.Display.endWrite();
     delay(100);
   }
+  // Verify I2C frequency
+  Serial.println(Wire.getClock());
   pps.setPowerEnable(false);
   pps.setOutputCurrent(0.0f);
   pps.setOutputVoltage(0.0f);
